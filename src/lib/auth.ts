@@ -1,11 +1,24 @@
 import NextAuth from 'next-auth';
 import { PrismaAdapter } from '@auth/prisma-adapter';
+import Google from 'next-auth/providers/google';
+import GitHub from 'next-auth/providers/github';
 import { db } from './db';
 import { authConfig } from './auth.config';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
-  providers: authConfig.providers,
+  providers: [
+    Google({
+      clientId:     process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      checks:       ['state'],
+    }),
+    GitHub({
+      clientId:     process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      checks:       ['state'],
+    }),
+  ],
   session:  { strategy: 'jwt' },
   pages:    { signIn: '/projects' },
   callbacks: {
