@@ -1,0 +1,9 @@
+# Used by Railway to install Chromium for the render server
+[phases.setup]
+nixPkgs = ["chromium", "nodejs_20", "openssl"]
+
+[phases.install]
+cmds = ["npm install"]
+
+[start]
+cmd = "node render-server.js"
