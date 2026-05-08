@@ -1,42 +1,73 @@
 'use client';
 
+import { useRef, useState, useEffect } from 'react';
 import { useChatStore } from '@/store/useChatStore';
 import { ChatPreview } from './ChatPreview';
 import { getPreviewDims } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 
+function useContainerScale(frameW: number, frameH: number) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      const s = Math.min(width / frameW, height / frameH, 1);
+      setScale(parseFloat(s.toFixed(4)));
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [frameW, frameH]);
+
+  return { containerRef, scale };
+}
+
 export function PhoneFrame() {
   const { showPhoneFrame, aspectRatio, isDark } = useChatStore();
   const dims = getPreviewDims(aspectRatio);
+  const isPortrait = aspectRatio === '9:16' || aspectRatio === '4:5';
+
+  const frameW = showPhoneFrame && isPortrait ? dims.width + 28 : dims.width;
+  const frameH = showPhoneFrame && isPortrait ? dims.height + 80 : dims.height;
+
+  const { containerRef, scale } = useContainerScale(frameW, frameH);
+
+  const scaledStyle = {
+    transform: scale < 1 ? `scale(${scale})` : undefined,
+    transformOrigin: 'center center',
+  };
 
   if (!showPhoneFrame) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="overflow-hidden shadow-2xl rounded-2xl" style={{ width: dims.width, height: dims.height }}>
+      <div ref={containerRef} className="flex items-center justify-center w-full h-full">
+        <div
+          className="overflow-hidden shadow-2xl rounded-2xl"
+          style={{ width: dims.width, height: dims.height, ...scaledStyle }}
+        >
           <ChatPreview width={dims.width} height={dims.height} />
         </div>
       </div>
     );
   }
-
-  // Phone frame only makes sense for portrait ratios
-  const isPortrait = aspectRatio === '9:16' || aspectRatio === '4:5';
 
   if (!isPortrait) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="overflow-hidden shadow-2xl rounded-2xl border-2 border-zinc-700" style={{ width: dims.width, height: dims.height }}>
+      <div ref={containerRef} className="flex items-center justify-center w-full h-full">
+        <div
+          className="overflow-hidden shadow-2xl rounded-2xl border-2 border-zinc-700"
+          style={{ width: dims.width, height: dims.height, ...scaledStyle }}
+        >
           <ChatPreview width={dims.width} height={dims.height} />
         </div>
       </div>
     );
   }
 
-  const frameW = dims.width + 28;
-  const frameH = dims.height + 80;
-
   return (
-    <div className="flex items-center justify-center h-full">
+    <div ref={containerRef} className="flex items-center justify-center w-full h-full">
       <div
         className={cn(
           'relative flex items-center justify-center rounded-[48px] shadow-2xl',
@@ -44,7 +75,7 @@ export function PhoneFrame() {
             ? 'bg-zinc-800 border-2 border-zinc-700'
             : 'bg-zinc-900 border-2 border-zinc-700'
         )}
-        style={{ width: frameW, height: frameH }}
+        style={{ width: frameW, height: frameH, ...scaledStyle }}
       >
         {/* Notch / Dynamic Island */}
         <div
@@ -69,7 +100,7 @@ export function PhoneFrame() {
         {/* Home indicator */}
         <div
           className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full opacity-60"
-          style={{ width: 100, height: 4, backgroundColor: isDark ? '#fff' : '#fff' }}
+          style={{ width: 100, height: 4, backgroundColor: '#fff' }}
         />
       </div>
     </div>

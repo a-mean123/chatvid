@@ -107,7 +107,7 @@ export function EditorShell({ projectId }: Props) {
               backgroundSize: '32px 32px',
             }}
           />
-          <div className="relative z-10 flex items-center justify-center w-full h-full p-4 md:p-6">
+          <div className="relative z-10 flex items-center justify-center w-full h-full p-2 sm:p-4 md:p-6">
             <PhoneFrame />
           </div>
         </div>
