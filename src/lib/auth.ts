@@ -3,10 +3,10 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import Google from 'next-auth/providers/google';
 import GitHub from 'next-auth/providers/github';
 import { db } from './db';
-import { authConfig } from './auth.config';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(db),
+  adapter:   PrismaAdapter(db),
+  trustHost: true,
   providers: [
     Google({
       clientId:     process.env.GOOGLE_CLIENT_ID,
@@ -19,8 +19,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       checks:       ['state'],
     }),
   ],
-  session:  { strategy: 'jwt' },
-  pages:    { signIn: '/projects' },
+  session: { strategy: 'jwt' },
+  pages:   { signIn: '/projects' },
+  cookies: {
+    pkceCodeVerifier: {
+      name: 'authjs.pkce.code_verifier',
+      options: {
+        httpOnly: true,
+        sameSite: 'none' as const,
+        path:     '/',
+        secure:   true,
+      },
+    },
+  },
   callbacks: {
     jwt({ token, user }) {
       if (user) {
